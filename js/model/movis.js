@@ -189,4 +189,33 @@ export class movis extends connect {
         await this.conexion.close();
         return res;
     }
+
+    async getAllBlueRayAvaliableCost(){
+        await this.conexion.connect();
+        const res = await this.collection.aggregate([
+            {
+              $unwind: "$format"
+            },
+            {
+              $match: {
+                "format.name": "Bluray"
+              }
+            },
+            {
+              $group: {
+                _id: "$format.name",
+                valor_total: {$sum: {$multiply: ["$format.value", "$format.copies"]}}
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                formato: "$_id",
+                valor_total: "$valor_total"
+              }
+            }
+          ]).toArray(); 
+        await this.conexion.close();
+        return res;
+    }
 }

@@ -114,29 +114,16 @@ export class author extends connect {
       await this.conexion.connect();
         const res = await this.collection.aggregate([
           {
-            $addFields: {
+            $project: {
               age: {
-                $floor: {
-                  $divide: [
-                    { $subtract: [new Date(), "$date_of_birth"] },
-                    365 * 24 * 60 * 60 * 1000
-                  ]
-                }
+                $subtract: [
+                  { $year: new Date() },
+                  { $year: { $dateFromString: { dateString: "$date_of_birth"}}}
+                ]
               }
             }
           },
-          {
-            $group: {
-              _id: null,
-              averageAge: { $avg: "$age" }
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              averageAge: 1
-            }
-          }
+          { $group: { _id: null, averageAge: {$avg: "$age"}}}
         ]).toArray(); 
         await this.conexion.close();
         return res;
@@ -150,4 +137,14 @@ export class author extends connect {
         await this.conexion.close();
         return res;
     }
+    
+    async getAllAuthorsWithAwardsAfter2015(){
+      await this.conexion.connect();
+        const res = await this.collection.find(
+          {"awards.year": {$gt: 2015}}
+        ).project({ _id: 0, id_actor: 1, full_name: 1, awards: 1}).toArray(); 
+        await this.conexion.close();
+        return res;
+    }
+
 }
